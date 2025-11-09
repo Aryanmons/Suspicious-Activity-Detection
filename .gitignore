@@ -1,28 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
 # Virtual environment
 .venv/
+env/
+venv/
 
-# Model files
+# TensorFlow / Models
 *.h5
+*.hdf5
 *.keras
 
-# Datasets / Sample videos
+# Dataset and large files
 SAMPLE_VIDS/
 src/DATA/
 src/uploads/
 
-# Cache and compiled files
-__pycache__/
-*.pyc
-*.pyo
-
-# Temp and large files
-*.png
-*.jpg
-*.jpeg
-
-# Node / Frontend build files
-src/frontend/node_modules/
-src/frontend/build/
-
-# Environment files
-.env
+# System / IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

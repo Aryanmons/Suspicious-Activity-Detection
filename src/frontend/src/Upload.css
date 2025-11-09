@@ -1,0 +1,133 @@
+body {
+  background: radial-gradient(circle at center, #0a2239, #09141d);
+  color: #fff;
+  font-family: "Poppins", sans-serif;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+.upload-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px; /* reduced padding */
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 2.3rem;
+  color: #00eaff;
+  text-shadow: 0 0 20px #00eaff;
+  margin-bottom: 15px; /* reduced gap */
+  font-weight: 600;
+}
+
+.upload-box {
+  background: rgba(11, 31, 48, 0.9);
+  border-radius: 20px;
+  box-shadow: 0 0 30px rgba(0, 234, 255, 0.25);
+  padding: 30px;
+  width: 550px;
+  max-width: 90%;
+  text-align: center;
+  transition: all 0.4s ease;
+}
+
+.upload-label {
+  text-align: center;
+  color: #00eaff;
+  border: 2px dashed #00eaff;
+  border-radius: 15px;
+  padding: 40px 20px;
+  cursor: pointer;
+  transition: 0.3s;
+  display: block;
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-label:hover {
+  background: rgba(0, 234, 255, 0.1);
+}
+
+input[type="file"] {
+  display: none;
+}
+
+.preview-video {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+  display: block;
+}
+
+.btn-group {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+button {
+  background: #00eaff;
+  border: none;
+  color: #000;
+  font-weight: bold;
+  padding: 12px 25px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.3s;
+  font-size: 1rem;
+}
+
+button:hover {
+  background: #00c0e8;
+  transform: scale(1.05);
+}
+
+.exit-btn {
+  background: #ff0033;
+  color: #fff;
+}
+
+.exit-btn:hover {
+  background: #d60029;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  background: #222;
+  border-radius: 10px;
+  margin-top: 15px;
+  overflow: hidden;
+}
+
+.progress {
+  height: 100%;
+  background: linear-gradient(90deg, #00eaff, #00ffb0);
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.result-box {
+  margin-top: 25px;
+  background: #102a43;
+  padding: 25px 40px;
+  border-radius: 18px;
+  box-shadow: 0 0 25px rgba(0, 234, 255, 0.3);
+  text-align: center;
+}
+
+.safe {
+  color: #00ff66;
+  font-weight: bold;
+}
+
+.danger {
+  color: #ff0033;
+  font-weight: bold;
+}
