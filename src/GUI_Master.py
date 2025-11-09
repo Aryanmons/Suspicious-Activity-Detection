@@ -1,262 +1,188 @@
 import tkinter as tk
-from PIL import Image , ImageTk
-import csv
-from datetime import date
-import time
-import numpy as np
+from PIL import Image, ImageTk
 import cv2
-from tkinter.filedialog import askopenfilename
+import numpy as np
+from tensorflow.keras.models import load_model
+from tkinter import filedialog, messagebox
+import time
 import os
-import shutil
-#from skimage import measure
-#import Train_FDD_cnn as TrainM
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime
 
+# ================================
+# EMAIL SETTINGS
+# ================================
+SENDER_EMAIL = "aryan1707golu@gmail.com"        # your email
+SENDER_PASSWORD = "aaeo tedj izcc vfrn"        # app password (not normal password)
+RECEIVER_EMAIL = "aryan1707br@gmail.com" # recipient’s email
 
-#==============================================================================
+# ================================
+# EMAIL FUNCTION
+# ================================
+def send_email_alert(video_name, suspicious_frames, total_frames, confidence):
+    subject = "🚨 Suspicious Activity Detected"
+    body = f"""
+    Suspicious activity detected during video analysis.
+
+    📁 Video: {video_name}
+    ⚠️ Suspicious Frames: {suspicious_frames} / {total_frames}
+    📊 Confidence: {confidence:.2f}%
+    🕒 Time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+
+    Please review the CCTV footage immediately.
+    """
+
+    msg = MIMEMultipart()
+    msg["From"] = SENDER_EMAIL
+    msg["To"] = RECEIVER_EMAIL
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain"))
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(SENDER_EMAIL, SENDER_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        print("📩 Email alert sent successfully!")
+    except Exception as e:
+        print("❌ Failed to send email:", e)
+
+# ================================
+# LOAD MODEL
+# ================================
+MODEL_PATH = "abnormalevent.h5"
+if not os.path.exists(MODEL_PATH):
+    messagebox.showerror("Error", "Model file not found! Train the model first.")
+    exit()
+
+model = load_model(MODEL_PATH)
+print("✅ Model Loaded Successfully")
+
+# ================================
+# SETUP MAIN WINDOW
+# ================================
 root = tk.Tk()
-root.state('zoomed')
-
 root.title("Suspicious Activity Detection")
+root.state('zoomed')
+root.configure(bg="#1a1a1a")
 
-current_path = str(os.path.dirname(os.path.realpath('__file__')))
+screen_w, screen_h = root.winfo_screenwidth(), root.winfo_screenheight()
 
-basepath=current_path  + "\\" 
+# ================================
+# BACKGROUND DESIGN
+# ================================
+bg_canvas = tk.Canvas(root, width=screen_w, height=screen_h, bg="#1a1a1a", highlightthickness=0)
+bg_canvas.pack(fill="both", expand=True)
 
-#==============================================================================
-#==============================================================================
+title_text = bg_canvas.create_text(
+    screen_w / 2, 50,
+    text="🔍 Suspicious Activity Detection System",
+    fill="cyan",
+    font=("Segoe UI", 36, "bold")
+)
 
-img = Image.open(basepath + "back5.jpg")
-w, h = root.winfo_screenwidth(), root.winfo_screenheight()
+# ================================
+# VIDEO DISPLAY AREA
+# ================================
+video_label = tk.Label(root, bg="#1a1a1a")
+video_label.place(relx=0.5, rely=0.55, anchor=tk.CENTER)
 
-bg = img.resize((w,h),Image.ANTIALIAS)
+status_label = tk.Label(
+    root, text="Load a video to start detection",
+    font=("Segoe UI", 18, "italic"), bg="#1a1a1a", fg="white"
+)
+status_label.place(relx=0.5, rely=0.9, anchor=tk.CENTER)
 
-bg_img = ImageTk.PhotoImage(bg)
+# ================================
+# FUNCTION: RUN DETECTION
+# ================================
+def detect_suspicious_activity(video_path):
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        messagebox.showerror("Error", "Unable to open video.")
+        return
 
-bg_lbl = tk.Label(root,image=bg_img)
-bg_lbl.place(x=0,y=0)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    suspicious_count = 0
+    frame_width, frame_height = 640, 480
 
-heading = tk.Label(root,text="Suspicious Avtivity Detection",width=25,font=("Times New Roman",45,'bold'),bg="#192841",fg="white")
-heading.place(x=240,y=0)
+    status_label.config(text="Detection Running...", fg="yellow")
+    print("🎥 Detection started...")
 
-#============================================================================================================
-def create_folder(FolderN):
-    
-    dst=os.getcwd() + "\\" + FolderN         # destination to save the images
-    
-    if not os.path.exists(dst):
-        os.makedirs(dst)
-    else:
-        shutil.rmtree(dst, ignore_errors=True)
-        os.makedirs(dst)
-
-
-def CLOSE():
-    root.destroy()
-#####==========================================================================================================
-    
-def update_label(str_T):
-    # clear_img()
-    result_label = tk.Label(root, text=str_T, width=50, font=("bold", 25),bg='cyan',fg='black' )
-    result_label.place(x=400, y=400)
-
-def train_model():
-    Train = ""
-    update_label("Model Training Start...............")
-    
-    start = time.time()
-
-    X=Train.main()
-    
-    end = time.time()
-        
-    ET="Execution Time: {0:.4} seconds \n".format(end-start)
-    
-    msg="Model Training Completed.."+'\n'+ X + '\n'+ ET
-
-    update_label(msg)
-
-###@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    
-
-
-def run_video(VPathName,XV,YV,S1,S2):
-
-    cap = cv2.VideoCapture(VPathName)
-#    cap.set(cv2.CAP_PROP_FPS, 30)
-
-#   cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'mp4v'))
-    def show_frame():
-                    
-        ret, frame = cap.read()
-        cap.set(cv2.CAP_PROP_FPS, 30)
-               
-        out=cv2.transpose(frame)
-    
-        out=cv2.flip(out,flipCode=0)
-    
-        cv2image   = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    
-        img   = Image.fromarray(cv2image).resize((S1, S2))
-    
-        imgtk = ImageTk.PhotoImage(image = img)
-        
-        lmain = tk.Label(root)
-#        lmain.place(x=560, y=190)
-        lmain.place(x=XV, y=YV)
-
-        lmain.imgtk = imgtk
-        lmain.configure(image=imgtk)
-        lmain.after(10, show_frame)
-                
-                
-    show_frame()
-        
-def VIDEO():
-    
-    global fn
-    
-    fn=""
-    fileName = askopenfilename(initialdir='/dataset', title='Select image',
-                               filetypes=[("all files", "*.*")])
-
-    fn = fileName
-    Sel_F = fileName.split('/').pop()
-    Sel_F = Sel_F.split('.').pop(1)
-            
-    if Sel_F!= 'mp4':
-        print("Select Video .mp4 File!!!!!!")
-    else:
-        run_video(fn,560, 190,753, 485)
-
-                
-  
-     
-def F2V(VideoN):
-    
-
-    Video_Fname=F2V.Create_Video(basepath + 'result',VideoN)
-    run_video(Video_Fname,560, 190,753, 485)
-    print(Video_Fname)
-
-###################################################################################################################
-###################################################################################################################
-def show_FDD_video(video_path):
-    ''' Display FDD video with annotated bounding box and labels '''
-    from keras.models import load_model
-    
-    # video_path=r"D:\Alka_python_2019_20\FDD_Main\Video_File\fall-01.mp4"
-    img_cols, img_rows = 64,64
-    
-    FALLModel=load_model('abnormalevent.h5')    #video = cv.VideoCapture(video_path);
-    
-    video = cv2.VideoCapture(video_path)
-        
-    # video = cv2.VideoCapture(0)
-
-    if (not video.isOpened()):
-        print("{} cannot be opened".format(video_path))
-        # return False
-
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    green = (0, 255, 0) 
-    red = (0, 0, 255)
-    # orange = (0, 127, 255)
-    line_type = cv2.LINE_AA
-    i=1
-    
     while True:
-        ret, frame = video.read()
-        
+        ret, frame = cap.read()
         if not ret:
-            break
-        img=cv2.resize(frame,(img_cols, img_rows),fx=0,fy=0, interpolation = cv2.INTER_CUBIC)
-        img=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        img = np.array(img)
-        
-        X_img = img.reshape(-1, img_cols, img_rows, 1)
-        X_img = X_img.astype('float32')
-        
-        X_img /= 255
-        
-        predicted =FALLModel.predict(X_img)
+            break  # end of video
 
-        if predicted[0][0] < 0.5:
-            predicted[0][0] = 0
-            predicted[0][1] = 1
-            label = 1
-        else:
-            predicted[0][0] = 1
-            predicted[0][1] = 0
-            label = 0
-          
-        frame_num = int(i)  #.iloc[:1,0])
-        # label = int(annotations['label'][i])
-        label_text = ""
-        
-        color = (255, 255, 255)
-        
-        if  label == 1 :
-            label_text = "Suspicious Avtivity Detected"
-            color = red
-            from subprocess import call
-            call(["python", "mail.py"])  
-        else:
-            label_text = "Normal Activity detected"
-            color = green
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = cv2.resize(gray, (64, 64))
+        gray = gray.reshape(1, 64, 64, 1).astype("float32") / 255.0
 
-        frame = cv2.putText(
-            frame, "Frame: {}".format(frame_num), (5, 30),
-            fontFace = font, fontScale = 1, color = color, lineType = line_type
-        )
-        frame = cv2.putText(
-            frame, "Label: {}".format(label_text), (5, 60),
-            fontFace = font, fontScale =1, color = color, lineType = line_type
-        )
+        pred = model.predict(gray, verbose=0)
+        label = "Suspicious Activity" if pred[0][0] > 0.5 else "Normal Activity"
+        color = (0, 0, 255) if label == "Suspicious Activity" else (0, 255, 0)
 
-        i=i+1
-        cv2.imshow('FDD', frame)
-        if cv2.waitKey(30) == 27:
+        if label == "Suspicious Activity":
+            suspicious_count += 1
+
+        cv2.putText(frame, label, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, color, 3)
+        cv2.rectangle(frame, (10, 10), (frame.shape[1]-10, frame.shape[0]-10), color, 2)
+
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        img = Image.fromarray(rgb_frame)
+        imgtk = ImageTk.PhotoImage(image=img.resize((frame_width, frame_height)))
+
+        video_label.config(image=imgtk)
+        video_label.image = imgtk
+        root.update_idletasks()
+        root.update()
+
+        if cv2.waitKey(1) & 0xFF == 27:
             break
 
-    video.release()
-    cv2.destroyAllWindows()
-       
-###################################################################################################################  
-def Video_Verify():
-    
-    global fn
-    
-#    fn=r"D:\Alka_python_2019_20\Alka_python_2019_20\Video Piracy\Piracy_Preserving\result.mp4"
-    fileName = askopenfilename(initialdir='/dataset', title='Select image',
-                               filetypes=[("all files", "*.*")])
+    cap.release()
 
-    fn = fileName
-    Sel_F = fileName.split('/').pop()
-    Sel_F = Sel_F.split('.').pop(1)
-            
-    if Sel_F!= 'mp4':
-        print("Select Video File!!!!!!")
+    suspicious_ratio = suspicious_count / total_frames * 100 if total_frames > 0 else 0
+    result_text = (
+        f"Suspicious Frames: {suspicious_count}/{total_frames} | "
+        f"Confidence: {suspicious_ratio:.2f}%"
+    )
+
+    if suspicious_ratio > 30:
+        status_label.config(text="🚨 Suspicious Activity Detected! Email Sent!", fg="red")
+        send_email_alert(os.path.basename(video_path), suspicious_count, total_frames, suspicious_ratio)
     else:
-        
-        show_FDD_video(fn)
-        # run_video(fn,520, 190,400,500)    
-########################@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
-        
-   
-###@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            
+        status_label.config(text="✅ Normal Activity", fg="lime")
 
-button5 = tk.Button(root,command = Video_Verify, text="Suspicious Activity Detection", width=20,font=("Times new roman", 25, "bold"),bg="cyan",fg="black")
-button5.place(x=100,y=150)
+    print("✅ Detection complete")
 
-close = tk.Button(root,command = CLOSE, text="Exit", width=20,font=("Times new roman", 25, "bold"),bg="red",fg="white")
-close.place(x=100,y=300)
+# ================================
+# FUNCTION: LOAD VIDEO
+# ================================
+def load_video():
+    file_path = filedialog.askopenfilename(
+        title="Select a Video",
+        filetypes=[("Video Files", "*.mp4 *.avi *.mov")]
+    )
+    if file_path:
+        status_label.config(text="Video Loaded: " + os.path.basename(file_path), fg="white")
+        root.after(1000, lambda: detect_suspicious_activity(file_path))
 
+# ================================
+# BUTTONS
+# ================================
+btn_style = {"font": ("Segoe UI", 18, "bold"), "width": 18, "height": 1, "bg": "#00b4d8", "fg": "white"}
 
+load_btn = tk.Button(root, text="🎬 Select Video", command=load_video, **btn_style)
+load_btn.place(relx=0.35, rely=0.15, anchor=tk.CENTER)
+
+exit_btn = tk.Button(root, text="❌ Exit", command=root.destroy, **btn_style)
+exit_btn.place(relx=0.65, rely=0.15, anchor=tk.CENTER)
+
+# ================================
+# RUN LOOP
+# ================================
 root.mainloop()
-
-
-
-
-
-
